@@ -1,28 +1,66 @@
-# purpose for this script is to practice hash and file creation with python
-# hashlib lets you create hashes
-# secrets is used for cryptographically secure random numbers
-# from the library pathlib, Path is a way to handle filesystem paths. You can also use import os
 import hashlib
 import secrets
 from pathlib import Path
+import tkinter as tk
 
-# desktop variable is assigned as Path.home() which gives the user's home directory with / desktop appending to the home path. so it goes from /home/username to /home/username/Desktop with the append
 desktop = Path.home() / "Desktop"
 filepath = desktop / "hashes.txt"
 
-# function make_hash generates 32 random bytes and passes them into hashlib to create the hash and converts it to a hex. its only returning 16 characters but that can be adjusted.
-def make_hash():
-    random_bytes = secrets.token_bytes(32)
+def make_hash(num_bytes=32, hash_length=16):
+    random_bytes = secrets.token_bytes(num_bytes)
     hash_object = hashlib.sha256(random_bytes)
-    return hash_object.hexdigest()[:16]
+    return hash_object.hexdigest()[:hash_length]
 
-# calls the function twice
-hash1 = make_hash()
-hash2 = make_hash()
+def generate_hashes():
+    try:
+        num_hashes = int(num_hashes_entry.get())
+        num_bytes = int(num_bytes_entry.get())
+        hash_length = int(hash_length_entry.get())
+    except ValueError:
+        output_box.delete('1.0', tk.END)
+        output_box.insert(tk.END, "Enter valid numbers.\n")
+        return
 
-# with ensures the file is closed automatically. open opens the file located at filepath
-with open(filepath, 'w') as file:
-    file.write(f"{hash1}\n{hash2}\n")
+    
+    hashes = [make_hash(num_bytes, hash_length) for _ in range(num_hashes)]
 
-# prints the path of where the file makes the hashes. this is to have your hashes saved on your desktop instead of printing to your terminal that can protect against shoulder surfing and also malware such as keyloggers
-print(f"Hashes written to: {filepath}")
+    
+    with open(filepath, 'w') as file:
+        file.write("\n".join(hashes))
+
+    
+    output_box.delete('1.0', tk.END)
+    output_box.insert(tk.END, "\n".join(hashes))
+
+    
+    print(f"Hashes written to: {filepath}")
+
+
+root = tk.Tk()
+root.title("Hasher")
+root.geometry("500x400")
+
+
+tk.Label(root, text="Number of hashes:").pack()
+num_hashes_entry = tk.Entry(root)
+num_hashes_entry.pack()
+num_hashes_entry.insert(0, "2")
+
+tk.Label(root, text="Bytes per hash:").pack()
+num_bytes_entry = tk.Entry(root)
+num_bytes_entry.pack()
+num_bytes_entry.insert(0, "32")
+
+tk.Label(root, text="Length of hash:").pack()
+hash_length_entry = tk.Entry(root)
+hash_length_entry.pack()
+hash_length_entry.insert(0, "16")
+
+
+output_box = tk.Text(root, width=50, height=10)
+output_box.pack(pady=10)
+
+
+tk.Button(root, text="Generate Hashes", command=generate_hashes).pack(pady=5)
+
+root.mainloop()
